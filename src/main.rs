@@ -1,4 +1,9 @@
+use syma::shell::run_shell;
+
 fn main() {
-    println!("Welcome to SyMa!");
+    match run_shell() {
+        Ok(_) => (),
+        Err(error) => eprintln!("{}", error)
+    }
 
 }

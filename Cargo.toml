@@ -12,3 +12,4 @@ keywords = ["math", "symbolic", "algebra", "calculus", "mathematics"]
 [dependencies]
 jati = { git = "https://github.com/broadinstitute/jati.git" }
 rustyline = "14.0.0"
+home = "0.5.9"
