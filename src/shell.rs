@@ -2,15 +2,12 @@ use rustyline::DefaultEditor;
 use rustyline::error::ReadlineError;
 use crate::error::Error;
 use crate::files::get_history_file;
+use crate::version;
 
 const PROMPT: &str = "SM> ";
-const VERSION: Option<&str> = option_env!("CARGO_PKG_VERSION");
 
 pub fn run_shell() -> Result<(), Error> {
-    match VERSION {
-        None => { println!("Welcome to Syma!"); }
-        Some(version) => { println!("Welcome to Syma Version {version}!"); }
-    }
+    version::print_intro();
     let mut editor = DefaultEditor::new()?;
     let history_file = get_history_file()?;
     if history_file.exists() {
