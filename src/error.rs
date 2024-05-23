@@ -1,7 +1,7 @@
 use std::borrow::Borrow;
 use std::fmt::{Debug, Display, Formatter};
 
-pub enum ErrorKind { IO, Readline }
+pub enum ErrorKind { IO, Readline, Jati }
 
 pub enum Error {
     Root { message: String },
@@ -13,7 +13,8 @@ impl ErrorKind {
     pub(crate) fn as_str(&self) -> &'static str {
         match self {
             ErrorKind::IO => "I/O",
-            ErrorKind::Readline => "Readline"
+            ErrorKind::Readline => "Readline",
+            ErrorKind::Jati => "Jati"
         }
     }
 }
@@ -72,6 +73,12 @@ impl From<std::io::Error> for Error {
 impl From<rustyline::error::ReadlineError> for Error {
     fn from(readline_error: rustyline::error::ReadlineError) -> Self {
         import_error(ErrorKind::Readline, readline_error)
+    }
+}
+
+impl From<jati::error::Error> for Error {
+    fn from(jati_error: jati::error::Error) -> Self {
+        import_error(ErrorKind::Jati, jati_error)
     }
 }
 
