@@ -2,8 +2,10 @@ use jati::parse_string;
 
 use crate::error::Error;
 use crate::parser::script_parser;
+use crate::symbols::Symbols;
 
 pub struct Interpreter {
+    symbols: Symbols,
     stop_requested: bool,
 }
 
@@ -23,7 +25,9 @@ pub struct Failure {
 
 impl Interpreter {
     pub fn new() -> Interpreter {
-        Interpreter { stop_requested: false }
+        let symbols = Symbols::new();
+        let stop_requested = false;
+        Interpreter { symbols, stop_requested }
     }
 
     pub fn stop_requested(&self) -> bool { self.stop_requested }
@@ -34,7 +38,7 @@ impl Interpreter {
                 Ok(raw_tree) => { raw_tree }
                 Err(error) => { return get_failure(line, error); }
             };
-        let typed_tree = raw_tree.into_typed();
+        let typed_tree = raw_tree.into_typed(&mut self.symbols);
         if line == "exit()" {
             self.request_stop();
         }
