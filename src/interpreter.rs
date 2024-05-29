@@ -1,5 +1,6 @@
 use jati::parse_string;
 use jati::symbols::symbol_table::PreDefFunTable;
+use jati::run::RunState as JatiRunState;
 
 use crate::error::Error;
 use crate::executor::Executor;
@@ -10,12 +11,13 @@ use crate::predef::PRE_DEF_FUNS;
 pub struct Interpreter {
     symbols: PreDefFunTable,
     state: RunState,
-    executor: Executor
+    executor: Executor,
 }
 
 pub(crate) struct RunState {
     pub(crate) stop_requested: bool,
 }
+
 pub enum Response {
     Success(Success),
     Failure(Failure),
@@ -48,7 +50,7 @@ impl Interpreter {
             };
         let typed_tree =
             match raw_tree.into_typed(&mut self.symbols) {
-                Ok(typed_tree) => { typed_tree}
+                Ok(typed_tree) => { typed_tree }
                 Err(error) => { return get_failure(line, error); }
             };
         self.executor.execute(typed_tree, &mut self.state);
@@ -61,7 +63,11 @@ impl Interpreter {
 
 impl RunState {
     pub(crate) fn new() -> RunState { RunState { stop_requested: false } }
-    pub(crate) fn request_stop(&mut self) { self.stop_requested = true; }
+}
+
+impl JatiRunState for RunState {
+    fn request_stop(&mut self) { self.stop_requested = true; }
+    fn stop_requested(&self) -> bool { self.stop_requested }
 }
 
 fn get_failure<E>(line: &str, error: E) -> Response
