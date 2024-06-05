@@ -22,7 +22,7 @@ pub fn run_shell() -> Result<(), Error> {
     } else {
         println!("No history file found at {:?}.", history_file);
     }
-    let mut interpreter = Interpreter::new();
+    let mut interpreter = Interpreter::new()?;
     while !interpreter.stop_requested() {
         match editor.readline(PROMPT) {
             Ok(line) => {

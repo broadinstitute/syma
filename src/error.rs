@@ -1,7 +1,8 @@
 use std::borrow::Borrow;
 use std::fmt::{Debug, Display, Formatter};
+use jati::trees::symbols::SymbolError;
 
-pub enum ErrorKind { IO, Readline, Jati }
+pub enum ErrorKind { IO, Readline, Jati, Symbol }
 
 pub enum Error {
     Root { message: String },
@@ -14,7 +15,8 @@ impl ErrorKind {
         match self {
             ErrorKind::IO => "I/O",
             ErrorKind::Readline => "Readline",
-            ErrorKind::Jati => "Jati"
+            ErrorKind::Jati => "Jati",
+            ErrorKind::Symbol => "Symbol"
         }
     }
 }
@@ -79,6 +81,12 @@ impl From<rustyline::error::ReadlineError> for Error {
 impl From<jati::error::Error> for Error {
     fn from(jati_error: jati::error::Error) -> Self {
         import_error(ErrorKind::Jati, jati_error)
+    }
+}
+
+impl From<SymbolError> for Error {
+    fn from(symbol_error: SymbolError) -> Self {
+        import_error(ErrorKind::Symbol, symbol_error)
     }
 }
 

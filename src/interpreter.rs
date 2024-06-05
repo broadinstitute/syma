@@ -1,21 +1,17 @@
 use jati::parse_string;
-use jati::symbols::symbol_table::PreDefFunTable;
-use jati::run::RunState as JatiRunState;
+use jati::runtime::Runtime as JatiRunState;
+use jati::symbols::symbol_table::BasicSymbolTable;
+use jati::trees::execute::{Executor, SimpleExecutor};
 
 use crate::error::Error;
-use crate::executor::Executor;
 use crate::parser::script_parser;
-
 use crate::predef::PRE_DEF_FUNS;
+use crate::runtime::Runtime;
 
 pub struct Interpreter {
-    symbols: PreDefFunTable,
-    state: RunState,
-    executor: Executor,
-}
-
-pub(crate) struct RunState {
-    pub(crate) stop_requested: bool,
+    symbols: BasicSymbolTable<Runtime>,
+    runtime: Runtime,
+    executor: SimpleExecutor<Runtime>
 }
 
 pub enum Response {
@@ -33,15 +29,16 @@ pub struct Failure {
 }
 
 impl Interpreter {
-    pub fn new() -> Interpreter {
-        let symbols = PreDefFunTable::new(&PRE_DEF_FUNS);
-        let state = RunState::new();
-        let executor = Executor::new();
-        Interpreter { symbols, state, executor }
+    pub fn new() -> Result<Interpreter, Error> {
+        let symbols =
+            BasicSymbolTable::<Runtime>::with_predef_funs(&PRE_DEF_FUNS)?;
+        let runtime = Runtime::new();
+        let executor = SimpleExecutor::<Runtime>::new();
+        Ok(Interpreter { symbols, runtime, executor })
     }
 
-    pub fn stop_requested(&self) -> bool { self.state.stop_requested }
-    pub fn request_stop(&mut self) { self.state.stop_requested = true; }
+    pub fn stop_requested(&self) -> bool { self.runtime.stop_requested() }
+    pub fn request_stop(&mut self) { self.runtime.request_stop(); }
     pub fn evaluate(&mut self, line: &str) -> Response {
         let raw_tree =
             match parse_string(script_parser(), line) {
@@ -53,21 +50,19 @@ impl Interpreter {
                 Ok(typed_tree) => { typed_tree }
                 Err(error) => { return get_failure(line, error); }
             };
-        self.executor.execute(typed_tree, &mut self.state);
-        if line == "exit()" {  //  TODO: Replace with execution of exit function
-            self.state.request_stop();
+        match self.executor.execute(&typed_tree, &mut self.runtime, &mut self.symbols) {
+            Ok(value) => {
+                println!("{}", value);
+                if line == "exit()" {  //  TODO: Replace with execution of exit function
+                    self.runtime.request_stop();
+                }
+                Response::Success(Success { refined_line: line.to_string() })
+            }
+            Err(error) => {
+                get_failure(line, error)
+            }
         }
-        Response::Success(Success { refined_line: line.to_string() })
     }
-}
-
-impl RunState {
-    pub(crate) fn new() -> RunState { RunState { stop_requested: false } }
-}
-
-impl JatiRunState for RunState {
-    fn request_stop(&mut self) { self.stop_requested = true; }
-    fn stop_requested(&self) -> bool { self.stop_requested }
 }
 
 fn get_failure<E>(line: &str, error: E) -> Response
