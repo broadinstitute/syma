@@ -53,9 +53,6 @@ impl Interpreter {
         match self.executor.execute(&typed_tree, &mut self.runtime, &mut self.symbols) {
             Ok(value) => {
                 println!("{}", value);
-                if line == "exit()" {  //  TODO: Replace with execution of exit function
-                    self.runtime.request_stop();
-                }
                 Response::Success(Success { refined_line: line.to_string() })
             }
             Err(error) => {
